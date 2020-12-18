@@ -1,0 +1,131 @@
+def scrape_info():
+    browser = init_browser()
+
+    # Visit the nasa mars news website
+    url = "https://mars.nasa.gov/news"
+    browser.visit(url)
+
+    # Pause for page to load
+    time.sleep(1)
+
+    # Scrape page into Soup
+    html = browser.html
+    soup = bs(html, "html.parser")
+    
+    #Scrape the NASA Mars News Site and collect the latest News Title and Paragraph Text.
+    #Assign the text to variables that you can reference later.
+
+    headline = soup.find_all("div", class_="content_title")
+    news_title=headline[1].text
+    article = soup.find_all("div", class_="article_teaser_body")
+    news_p=article[0].text
+    
+    # Visit the url for JPL Featured Space Image
+    url2 = "https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars"
+    browser.visit(url2)
+
+    # Pause for page to load
+    time.sleep(1)
+
+    # Scrape page into Soup
+    html = browser.html
+    soup = bs(html, "html.parser")
+    
+    #navigate the site and find the image url for the current Featured Mars Image
+    #and assign the url string to a variable called featured_image_url.
+    relative_image_path = soup.find('article', class_="carousel_item")['style']
+    relative_image_path_url=relative_image_path.split("('", 1)[1].split("')")[0]
+    featured_image_url = "https://www.jpl.nasa.gov/" + relative_image_path_url
+    
+    
+    # Visit the Mars Facts webpage
+    url3 = "https://space-facts.com/mars/"
+    browser.visit(url3)
+
+    # Pause for page to load
+    time.sleep(1)
+
+    # Scrape page into Soup
+    html3 = browser.html
+    soup = bs(html3, "html.parser")
+    
+    #scrape the table containing facts about the planet including Diameter, Mass, etc.
+    facts=soup.find_all(class_="column-2")
+    eq_diam=facts[0].text
+    polar_diam=facts[1].text
+    mass=facts[2].text
+    moons = facts[3].text
+    orb_dist=facts[4].text
+    orb_period=facts[5].text
+    surf_temp=facts[6].text
+    first_rec=facts[7].text
+    rec_by=facts[8].text
+    
+    
+    #building fact table
+    mars_facts={
+        "Equatorial Diameter":eq_diam,
+        "Polar Diameter":polar_diam,
+        "Mass":mass,
+        "Moons":moons,
+        "Orbit Distance":orb_dist,
+        "Orbit Period":orb_period,
+        "Surface Temp":surf_temp,
+        "First Record":first_rec,
+        "Recorded By":rec_by
+    }
+    
+    # Visit the USGS Astrogeology site 
+    url4 = "https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars"
+    browser.visit(url4)
+
+    # Pause for page to load
+    time.sleep(1)
+
+    # Scrape page into Soup
+    html4 = browser.html
+    soup = bs(html4, "html.parser")
+    
+    #obtain high resolution images for each of Mar's hemispheres.
+    #You will need to click each of the links to the hemispheres in order to find the image url to the full resolution image
+    #for each hemisphere, pull the link to the page, go to that page, find the url
+    
+    base_url="https://astrogeology.usgs.gov"
+    #save all urls for hemisphere image pages to a list, then go to the urls
+    #and pull the large image url & add to list
+    hemispheres=soup.find_all("a",class_="itemLink product-item")
+    total=0
+    urls=[]
+    hem_imgs=[]
+    for hemisphere in hemispheres:
+        url=base_url+hemispheres[total].attrs["href"]
+        if url not in urls:
+            urls.append(url)
+        total = total + 1
+    for url in urls:
+        browser.visit(url)
+        time.sleep(1)
+        html = browser.html
+        soup = bs(html, "html.parser")
+        hem=soup.find_all("img",class_="wide-image")[0].attrs["src"]
+        hem_imgs.append(hem)
+        
+    
+    #hemisphere image table
+    hemisphere_image_urls = [
+    {"title": "Valles Marineris Hemisphere", "img_url": base_url + hem_imgs[3]},
+    {"title": "Cerberus Hemisphere", "img_url": base_url + hem_imgs[0]},
+    {"title": "Schiaparelli Hemisphere", "img_url": base_url + hem_imgs[1]},
+    {"title": "Syrtis Major Hemisphere", "img_url": base_url + hem_imgs[2]},
+    ]
+    
+    #print just to see if it's working
+    print(news_title)
+    print("-----")
+    print(news_p)
+    print("-----")
+    print(featured_image_url)
+    print("-----")
+    print(mars_facts)
+    print("-----")
+    print(hemisphere_image_urls)
